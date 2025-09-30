@@ -19,32 +19,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      {/* The font is now controlled by the @theme directive in globals.css */}
-      <body className={inter.className}>
+      {/* Apply dark mode classes directly to the body */}
+      <body className={`${inter.className} bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-200`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem={false}
           disableTransitionOnChange
         >
-          {/* Apply background and text colors using CSS variables */}
-          <div 
-            className="min-h-screen transition-colors duration-300"
-            style={{
-              backgroundColor: 'var(--color-background)',
-              color: 'var(--color-foreground)'
-            }}
-          >
-            <style jsx global>{`
-              body {
-                --color-background: var(--color-light-bg);
-                --color-foreground: var(--color-light-text);
-              }
-              .dark body {
-                --color-background: var(--color-dark-bg);
-                --color-foreground: var(--color-dark-text);
-              }
-            `}</style>
+          <div className="min-h-screen">
             <Header />
             <main>{children}</main>
           </div>
