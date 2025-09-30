@@ -1,0 +1,45 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  name           String?
+  email          String?   @unique
+  hashedPassword String?
+  createdAt      DateTime  @default(now())
+
+  ownedProjects  Project[] @relation("ProjectOwner")
+  assignedTasks  Task[]    @relation("TaskAssignee")
+}
+
+model Project {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  owner       User     @relation("ProjectOwner", fields: [ownerId], references: [id])
+  ownerId     String   @db.ObjectId
+
+  tasks       Task[]
+}
+
+model Task {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  status      String   // e.g., "TODO", "IN_PROGRESS", "DONE"
+  createdAt   DateTime @default(now())
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String   @db.ObjectId
+
+  assignee    User?    @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  assigneeId  String?  @db.ObjectId
+}
