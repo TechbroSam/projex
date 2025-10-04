@@ -1,21 +1,8 @@
 /* src/app/globals.css */
 
-/* Import the core Tailwind styles */
+/* This single import handles all of Tailwind's core styles in v4 */
 @import "tailwindcss";
 
-/* Define your theme and configurations */
-@theme {
-  --color-dark-bg: #111827; /* Dark background */
-  --color-light-bg: #f9fafb; /* Light background */
-  --color-dark-text: #d1d5db; /* Dark mode text */
-  --color-light-text: #1f2937; /* Light mode text */
 
-  --font-sans: 'Inter', sans-serif;
 
-  --breakpoint-sm: 640px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 1024px;
-  --breakpoint-xl: 1280px;
-
-  --darkMode: 'class';
-}
+@custom-variant dark (&:where(.dark, .dark *));

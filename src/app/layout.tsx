@@ -4,11 +4,13 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Header from "@/components/Header";
+import Providers from "@/components/Providers";
+import Footer from "@/components/Footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ProjeX - Project Management App",
+  title: "ProjeXY - Project Management App",
   description: "Organize tasks, track progress, and collaborate seamlessly.",
 };
 
@@ -18,19 +20,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      {/* Apply dark mode classes directly to the body */}
-      <body className={`${inter.className} bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-200`}>
+    <html className="dark" lang="en" suppressHydrationWarning>
+      {/* Apply flexbox directly to the body */}
+      <body className={`${inter.className} flex flex-col min-h-screen bg-white dark:bg-black text-black dark:text-white`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
         >
-          <div className="min-h-screen">
-            <Header />
-            <main>{children}</main>
-          </div>
+          <Providers>
+            <div className="flex flex-col flex-1">
+              <Header />
+              {/* This main tag will now grow and have proper spacing */}
+              <main className="flex-grow container mx-auto px-4 py-12">
+                {children}
+              </main>
+              <Footer />
+            </div>
+          </Providers>
         </ThemeProvider>
       </body>
     </html>
