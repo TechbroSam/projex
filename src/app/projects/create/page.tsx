@@ -11,11 +11,13 @@ export default function CreateProjectPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const [showUpgrade, setShowUpgrade] = useState(false); // New state to control upgrade message
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    setShowUpgrade(false);
 
     try {
       const res = await fetch('/api/projects', {
@@ -24,11 +26,16 @@ export default function CreateProjectPage() {
         body: JSON.stringify({ name, description }),
       });
 
+    const data = await res.json();
       if (res.ok) {
-        router.push('/dashboard'); // Redirect to dashboard on success
+        router.push('/dashboard');
       } else {
-        const data = await res.json();
-        throw new Error(data.message || 'Failed to create project.');
+        // Check for the special upgrade flag
+        if (data.upgrade) {
+          setShowUpgrade(true);
+        } else {
+          throw new Error(data.message || 'Failed to create project.');
+        }
       }
     } catch (err: any) {
       setError(err.message);
@@ -36,6 +43,32 @@ export default function CreateProjectPage() {
       setIsLoading(false);
     }
   };
+
+    // If showUpgrade is true, render the upgrade prompt instead of the form
+  if (showUpgrade) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-2xl mx-auto text-center bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
+          <h2 className="text-2xl font-bold mb-4">You've Reached Your Project Limit</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            The free plan is limited to 3 projects. Upgrade to Premium to create unlimited projects and unlock features like AI assist, real-time chat, and more.
+          </p>
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-8">
+          <Link 
+            href="/dashboard/billing" 
+            className="w-full sm:w-auto inline-block bg-orange-600 text-white px-6 py-3 rounded-md hover:bg-orange-700 transition-colors"
+          >
+            Upgrade to Premium
+          </Link>
+          <button onClick={() => setShowUpgrade(false)} className="text-sm text-gray-500 hover:underline">
+            Maybe later
+          </button>
+            </div>
+
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">

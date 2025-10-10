@@ -9,7 +9,7 @@ export default function Header() {
       <div className="container mx-auto flex items-center justify-between p-4">
         <Link href="/">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            ProjeXY
+            Proje<span className='text-orange-500'>XY</span>
           </h1>
         </Link>
         <div className="flex items-center gap-4">

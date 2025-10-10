@@ -8,15 +8,34 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Define the roles
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum Plan {
+  FREE
+  PREMIUM
+}
+
 model User {
   id             String    @id @default(auto()) @map("_id") @db.ObjectId
   name           String?
   email          String?   @unique
   hashedPassword String?
+  image          String?   
   createdAt      DateTime  @default(now())
+  
+  plan           Plan      @default(FREE)
 
+ 
+  stripeCustomerId String?
+  
   ownedProjects  Project[] @relation("ProjectOwner")
   assignedTasks  Task[]    @relation("TaskAssignee")
+  teams          TeamMembership[]
+  comments       Comment[] // A user can write many comments
 }
 
 model Project {
@@ -24,22 +43,60 @@ model Project {
   name        String
   description String?
   createdAt   DateTime @default(now())
-
+  
+  // A project has one owner
   owner       User     @relation("ProjectOwner", fields: [ownerId], references: [id])
   ownerId     String   @db.ObjectId
 
+  // A project has many team memberships, linking it to users
+  members     TeamMembership[]
+  
+  // A project has many tasks
   tasks       Task[]
 }
 
+// This model correctly links Users and Projects and stores the role
+model TeamMembership {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  role      Role   @default(MEMBER)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @db.ObjectId
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String   @db.ObjectId
+
+  @@unique([userId, projectId]) // A user can only be on a project team once
+}
+
 model Task {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
   title       String
-  status      String   // e.g., "TODO", "IN_PROGRESS", "DONE"
-  createdAt   DateTime @default(now())
+  description String?
+  status      String    // "TODO", "IN_PROGRESS", "DONE"
+  priority    String?
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId   String   @db.ObjectId
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String    @db.ObjectId
 
-  assignee    User?    @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  assigneeId  String?  @db.ObjectId
+  assignee    User?     @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  assigneeId  String?   @db.ObjectId
+
+  comments    Comment[] // A task can have many comments
+}
+
+// New model for comments
+model Comment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  text      String
+  createdAt DateTime @default(now())
+
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String   @db.ObjectId
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId    String   @db.ObjectId
 }

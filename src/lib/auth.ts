@@ -1,9 +1,8 @@
 // src/lib/auth.ts
 import { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Plan } from "@prisma/client";
 import bcrypt from 'bcryptjs';
-import { JWT } from "next-auth/jwt";
 
 const prisma = new PrismaClient();
 
@@ -21,7 +20,13 @@ export const authOptions: AuthOptions = {
         const user = await prisma.user.findUnique({ where: { email: credentials.email } });
 
         if (user && user.hashedPassword && (await bcrypt.compare(credentials.password, user.hashedPassword))) {
-          return { id: user.id, name: user.name, email: user.email };
+          // Include the plan status when the user logs in
+          return { 
+            id: user.id, 
+            name: user.name, 
+            email: user.email,
+            plan: user.plan,
+          };
         }
         
         return null;
@@ -32,17 +37,27 @@ export const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   pages: { signIn: '/login' },
   callbacks: {
-    // This callback passes the user ID into the JWT token
-    async jwt({ token, user }) {
+    // This callback adds the plan to the JWT token
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
+        token.plan = user.plan;
+      }
+      
+      // This part runs when you call the update() function
+      if (trigger === "update") {
+         const dbUser = await prisma.user.findUnique({ where: { id: token.sub } });
+         if (dbUser) {
+            token.plan = dbUser.plan;
+         }
       }
       return token;
     },
-    // This callback passes the user ID from the token to the session object
-    async session({ session, token }: { session: any; token: JWT }) {
-      if (session.user) {
-        session.user.id = token.id;
+    // This callback adds the plan from the token to the final session object
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.sub as string;
+        session.user.plan = token.plan;
       }
       return session;
     },

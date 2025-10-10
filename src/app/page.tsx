@@ -37,7 +37,7 @@ export default function HomePage() {
           </p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
             <Link href="/signup" className="rounded-md bg-orange-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600">
-              Get started
+              Get started for free
             </Link>
             <Link href="/login" className="text-sm font-semibold leading-6">
               Log in <span aria-hidden="true">&rarr;</span>
