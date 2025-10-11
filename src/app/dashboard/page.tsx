@@ -34,18 +34,6 @@ function DashboardContent() {
   const isPremium = currentPlan === 'PREMIUM';
  
 
-   useEffect(() => {
-    // Check for the success parameter from Stripe on page load
-    if (searchParams.get('subscription_success')) {
-      setIsRefreshing(true);
-      // Use router.refresh() to re-fetch server data, which includes the session
-      router.refresh();
-      // Clean up the URL
-      router.replace('/dashboard', { scroll: false });
-      setIsRefreshing(false);
-    }
-  }, [searchParams, router]);
-
   useEffect(() => {
   if (searchParams.get('subscription_success')) {
       // Pass an object to the update function to trigger our new JWT logic
