@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { text, taskId } = await request.json();
+    const { text, taskId, attachments } = await request.json();
     if (!text || !taskId) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
@@ -39,6 +39,7 @@ export async function POST(request: Request) {
         text,
         taskId,
         authorId: session.user.id,
+         attachments: attachments || [], // Save the attachments
       },
       include: {
         author: { select: { name: true } },

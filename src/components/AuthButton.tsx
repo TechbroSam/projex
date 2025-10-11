@@ -3,20 +3,27 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { User } from 'lucide-react';
 
 export default function AuthButton() {
   const { data: session, status } = useSession();
 
-  // Show a loading state while the session is being determined
   if (status === 'loading') {
-    return <div className="w-24 h-9 rounded-md bg-gray-200 dark:bg-gray-700 animate-pulse" />;
+    return <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />;
   }
 
-  // If the user is logged in, show their name and a Log Out button
   if (session) {
     return (
       <div className="flex items-center gap-4">
-        <span className="text-sm hidden sm:inline">{session.user?.name}</span>
+        {/* Link to the profile page using the user's avatar */}
+        <Link href="/dashboard/profile" className="relative h-9 w-9 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700">
+          {session.user?.image ? (
+            <Image src={session.user.image} alt={session.user.name || "Profile"} fill className="object-cover" />
+          ) : (
+            <User className="h-full w-full text-gray-400" />
+          )}
+        </Link>
         <button
           onClick={() => signOut({ callbackUrl: '/' })}
           className="px-4 py-2 text-sm font-medium rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -27,7 +34,6 @@ export default function AuthButton() {
     );
   }
 
-  // If the user is not logged in, show a Log In button
   return (
     <Link
       href="/login"

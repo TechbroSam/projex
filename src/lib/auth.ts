@@ -2,7 +2,7 @@
 import { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaClient, Plan } from "@prisma/client";
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -16,48 +16,50 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) return null;
-        
-        const user = await prisma.user.findUnique({ where: { email: credentials.email } });
 
-        if (user && user.hashedPassword && (await bcrypt.compare(credentials.password, user.hashedPassword))) {
-          // Include the plan status when the user logs in
-          return { 
-            id: user.id, 
-            name: user.name, 
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email },
+        });
+
+        if (
+          user &&
+          user.hashedPassword &&
+          (await bcrypt.compare(credentials.password, user.hashedPassword))
+        ) {
+          return {
+            id: user.id,
+            name: user.name,
             email: user.email,
+            image: user.image, // Pass image on initial login
             plan: user.plan,
           };
         }
-        
         return null;
       },
     }),
   ],
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
-  pages: { signIn: '/login' },
+  pages: { signIn: "/login" },
   callbacks: {
-    // This callback adds the plan to the JWT token
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.plan = user.plan;
+        token.picture = user.image; // Use 'picture' for the token's image field
       }
-      
-      // This part runs when you call the update() function
-      if (trigger === "update") {
-         const dbUser = await prisma.user.findUnique({ where: { id: token.sub } });
-         if (dbUser) {
-            token.plan = dbUser.plan;
-         }
+
+      // This is the crucial part for updating the profile picture
+      if (trigger === "update" && session?.image) {
+        token.picture = session.image;
       }
       return token;
     },
-    // This callback adds the plan from the token to the final session object
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.sub as string;
         session.user.plan = token.plan;
+        session.user.image = token.picture as string; // Pass the image from the token to the session
       }
       return session;
     },

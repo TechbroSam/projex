@@ -93,11 +93,11 @@ export default function SignUpPage() {
             <div className="ml-2 text-sm">
               <label htmlFor="terms" className="text-gray-500 dark:text-gray-400">
                 By checking the box, you agree to the{' '}
-                <Link href="/terms" className="font-medium text-orange-600 hover:underline">
+                <Link href="/terms" target="_blank" className="font-medium text-orange-600 hover:underline">
                   Terms & Conditions
                 </Link>{' '}
                 and{' '}
-                <Link href="/privacy" className="font-medium text-orange-600 hover:underline">
+                <Link href="/privacy" target="_blank" className="font-medium text-orange-600 hover:underline">
                   Privacy Policy
                 </Link>
                 .

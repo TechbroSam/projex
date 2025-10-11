@@ -1,9 +1,9 @@
 // src/app/projects/[id]/page.tsx
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, use } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation"; // Import the router
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus, Users } from "lucide-react";
 import AddTaskModal from "@/components/AddTaskModal";
@@ -12,11 +12,21 @@ import { DndContext, DragEndEvent, useDroppable } from "@dnd-kit/core";
 import TaskCard from "@/components/TaskCard";
 import InviteMemberModal from "@/components/InviteMemberModal";
 import TaskDetailModal from "@/components/TaskDetailModal";
+import { Video } from 'lucide-react'; 
+import VideoChatModal from '@/components/VideoChatModal'; 
+
 
 // Define types
 interface User {
   id: string;
+  image: string | null;
   name: string | null;
+  email: string | null;
+  hashedPassword: string | null;
+  createdAt: Date;
+  plan: "FREE" | "PREMIUM";
+  stripeCustomerId: string | null;
+  projectMembers: { role: string }[];
 }
 interface Task {
   id: string;
@@ -61,33 +71,43 @@ function TaskColumn({
             onClick={() => onTaskClick(task.id)}
             className="cursor-pointer"
           >
-            <TaskCard id={task.id} title={task.title} assignee={task.assignee} onDelete={onDelete} />
+            <TaskCard
+              id={task.id}
+              title={task.title}
+              assignee={task.assignee}
+              onDelete={onDelete}
+            />
           </div>
         ))}
       </div>
     </div>
   );
 }
-// Correctly define the page's props - params is now a Promise
+
+// Correctly define the page's props
 interface PageProps {
-  params: Promise<{
+  params: {
     id: string;
-  }>;
+  };
 }
 
 export default function ProjectPage({ params }: PageProps) {
-  // Unwrap the params promise using React.use()
-  const { id } = React.use(params);
-  const { status } = useSession();
-  const router = useRouter(); // Initialize the router
+  const { id } = params;
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-
-  // State for the task detail modal
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  // FIX: Add state for the video chat modal, initialized to false
+  const [isVideoChatOpen, setIsVideoChatOpen] = useState(false);
+
+  // Get the user's plan from the session, default to FREE
+  const currentPlan = (session?.user as any)?.plan || "FREE";
+
+ 
 
   const fetchProject = useCallback(async () => {
     try {
@@ -110,18 +130,12 @@ export default function ProjectPage({ params }: PageProps) {
   }, [id]);
 
   useEffect(() => {
-    // FIX: Handle all session states
     if (status === "authenticated") {
       fetchProject();
     } else if (status === "unauthenticated") {
-      // If user is not logged in, redirect them to the login page
       router.push("/login");
     }
   }, [fetchProject, status, router]);
-
-  if (status === "loading" || !project) {
-    return <p className="text-center py-20">Loading project...</p>;
-  }
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { over, active } = event;
@@ -146,14 +160,16 @@ export default function ProjectPage({ params }: PageProps) {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || status === "loading") {
     return <p className="text-center py-20">Loading project...</p>;
   }
 
   if (!project) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
-        <p className="text-red-500">Failed to load project</p>
+        <p className="text-red-500">
+          Failed to load project or you do not have access.
+        </p>
         <Link
           href="/dashboard"
           className="text-sm text-gray-500 hover:underline mt-4 inline-block"
@@ -170,7 +186,6 @@ export default function ProjectPage({ params }: PageProps) {
     DONE: tasks.filter((task) => task.status === "DONE"),
   };
 
-  // Safely access members with fallback to empty array
   const members = project.members || [];
 
   return (
@@ -192,12 +207,21 @@ export default function ProjectPage({ params }: PageProps) {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setIsInviteModalOpen(true)}
-                  className="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
-                >
-                  <Users size={20} /> Invite
+                {/* Conditionally render the Invite button */}
+                  {currentPlan === 'PREMIUM' && (
+                <button onClick={() => setIsVideoChatOpen(true)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                  <Video size={20} /> Video Call
                 </button>
+              )}
+                {/* Conditionally render the Invite button */}
+                {currentPlan === "PREMIUM" && (
+                  <button
+                    onClick={() => setIsInviteModalOpen(true)}
+                    className="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+                  >
+                    <Users size={20} /> Invite
+                  </button>
+                )}
                 <button
                   onClick={() => setIsAddTaskModalOpen(true)}
                   className="flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700"
@@ -206,8 +230,6 @@ export default function ProjectPage({ params }: PageProps) {
                 </button>
               </div>
             </div>
-
-            {/* Team members section with safe access */}
             <div className="mt-4 flex items-center gap-2">
               <p className="text-sm font-semibold">Team:</p>
               <div className="flex -space-x-2">
@@ -220,16 +242,9 @@ export default function ProjectPage({ params }: PageProps) {
                     {member.name?.charAt(0).toUpperCase() || "?"}
                   </div>
                 ))}
-                {members.length === 0 && (
-                  <div className="text-sm text-gray-500 italic">
-                    No team members yet
-                  </div>
-                )}
               </div>
             </div>
           </header>
-
-          {/* Kanban Board - Fully Implemented */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <TaskColumn
               id="TODO"
@@ -255,7 +270,6 @@ export default function ProjectPage({ params }: PageProps) {
           </div>
         </div>
       </DndContext>
-
       <Modal
         isOpen={isAddTaskModalOpen}
         onClose={() => setIsAddTaskModalOpen(false)}
@@ -266,7 +280,6 @@ export default function ProjectPage({ params }: PageProps) {
           onTaskAdded={fetchProject}
         />
       </Modal>
-
       <Modal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
@@ -286,9 +299,16 @@ export default function ProjectPage({ params }: PageProps) {
             taskId={selectedTaskId}
             projectMembers={project.members}
             onClose={() => setSelectedTaskId(null)}
-            onUpdate={fetchProject} // Re-fetch all data on update
+            onUpdate={fetchProject}
           />
         </Modal>
+      )}
+        {/* FIX: Conditionally render the VideoChatModal */}
+      {isVideoChatOpen && (
+        <VideoChatModal 
+          projectId={params.id} 
+          onClose={() => setIsVideoChatOpen(false)} 
+        />
       )}
     </>
   );
