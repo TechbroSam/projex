@@ -6,6 +6,12 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle } from "lucide-react";
 
+interface SessionUser {
+  id: string;
+  plan: string;
+  image: string | null;
+}
+
 function BillingContent() {
     // We get the 'update' function from useSession
     const { data: session, update } = useSession();
@@ -23,7 +29,7 @@ function BillingContent() {
         }
     }, [searchParams, router, update]);
     
-    const currentPlan = (session?.user as any)?.plan || 'FREE';
+    const currentPlan = (session?.user as SessionUser)?.plan || 'FREE';
 
     const handleManageSubscription = async () => {
         setIsLoading(true);

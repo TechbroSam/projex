@@ -41,6 +41,11 @@ interface Project {
   members: User[];
 }
 
+interface SessionUser {
+  name?: string | null;
+  plan?: string;
+}
+
 // Reusable Column Component
 function TaskColumn({
   id,
@@ -104,8 +109,10 @@ export default function ProjectPage({ params }: PageProps) {
   // FIX: Add state for the video chat modal, initialized to false
   const [isVideoChatOpen, setIsVideoChatOpen] = useState(false);
 
+   const user = session?.user as SessionUser;
+
   // Get the user's plan from the session, default to FREE
-  const currentPlan = (session?.user as any)?.plan || "FREE";
+  const currentPlan = (session?.user as SessionUser)?.plan || "FREE";
 
  
 

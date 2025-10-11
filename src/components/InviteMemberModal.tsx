@@ -31,8 +31,9 @@ export default function InviteMemberModal({ projectId, onClose, onMemberInvited 
       
       onMemberInvited();
       onClose();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) { setError(err.message); }
+      else { setError('An unknown error occurred.'); }
     } finally {
       setIsLoading(false);
     }
@@ -43,7 +44,7 @@ export default function InviteMemberModal({ projectId, onClose, onMemberInvited 
       <h2 className="text-xl font-bold mb-6">Invite a Team Member</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium">User's Email Address</label>
+          <label htmlFor="email" className="block text-sm font-medium">User&apos;s Email Address</label>
           <input
             id="email"
             type="email"

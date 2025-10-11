@@ -6,9 +6,16 @@ import { PrismaClient, Role } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Define the context parameter type for Next.js 14+
+interface RouteContext {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext // Use context instead of destructuring
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -16,10 +23,12 @@ export async function DELETE(
   }
 
   try {
+    // Await the params Promise first
+    const params = await context.params;
     const commentId = params.id;
     const userId = session.user.id;
 
-    // Find the comment and its project to check permissions
+    // Find the comment to verify permissions
     const comment = await prisma.comment.findUnique({
       where: { id: commentId },
       select: {

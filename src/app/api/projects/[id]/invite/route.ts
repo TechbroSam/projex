@@ -5,22 +5,30 @@ import { authOptions } from '@/lib/auth';
 import { PrismaClient } from '@prisma/client';
 import { Resend } from 'resend';
 import InviteEmail from '../../../../../../emails/InviteEmail';
-// Update the import path to the correct relative location
-
 
 const prisma = new PrismaClient();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// Define the context parameter type for Next.js 14+
+interface RouteContext {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
 export async function POST(
   request: NextRequest, 
-  { params }: { params: { id: string } }
+  context: RouteContext // Use context instead of destructuring
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || !session.user.name) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Await the params Promise first
+  const params = await context.params;
   const projectId = params.id;
+  
   const { email } = await request.json();
   if (!email) return NextResponse.json({ message: 'Email is required.' }, { status: 400 });
 

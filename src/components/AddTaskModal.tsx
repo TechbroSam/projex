@@ -33,8 +33,9 @@ export default function AddTaskModal({ projectId, onClose, onTaskAdded }: AddTas
       
       onTaskAdded();
       onClose();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) { setError(err.message); }
+      else { setError('Failed to create task.'); }
     } finally {
       setIsLoading(false);
     }

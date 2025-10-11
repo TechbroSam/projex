@@ -9,7 +9,8 @@ import { useState } from 'react';
 
 export default function ProfilePage() {
  const { data: session, update } = useSession();
-  const user = session?.user as any;
+  // In both files, at the top of the component:
+const user = session?.user as { name?: string; email?: string; plan?: string; image?: string; };
 
     const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');

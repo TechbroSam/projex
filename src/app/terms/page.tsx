@@ -15,7 +15,7 @@ export default function TermsPage() {
       </p>
       <h2 className="text-3xl font-bold mt-8">3. Changes to Terms</h2>
       <p className="mt-4 text-lg text-gray-400">
-        ProjeXY reserves the right to modify these terms and conditions at any time without prior notice. If ProjeXY makes changes to these terms and conditions, it will post the revised terms and conditions on this page and update the "Last Updated" date at the top of this page.
+        ProjeXY reserves the right to modify these terms and conditions at any time without prior notice. If ProjeXY makes changes to these terms and conditions, it will post the revised terms and conditions on this page and update the &quot;Last Updated&quot; date at the top of this page.
       </p>
       <h2 className="text-3xl font-bold mt-8">4. Governing Law</h2>
       <p className="mt-4 text-lg text-gray-400">

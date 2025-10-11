@@ -23,6 +23,12 @@ interface CommentSectionProps {
   initialComments: Comment[];
 }
 
+// Define a specific type for the session user to avoid using 'any'
+interface SessionUser {
+  id?: string;
+  isAdmin?: boolean;
+}
+
 export default function CommentSection({
   taskId,
   projectId,
@@ -33,6 +39,10 @@ export default function CommentSection({
   const [newComment, setNewComment] = useState("");
   const [attachments, setAttachments] = useState<{url: string, fileName: string}[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+
+   // Safely cast the session user to our specific type
+  const user = session?.user as SessionUser;
 
   // Listen for new comments in real-time
   useEffect(() => {
@@ -163,7 +173,7 @@ export default function CommentSection({
 
             {/* Delete Button */}
             {(session?.user?.id === comment.author.id ||
-              (session?.user as any)?.isAdmin) && (
+              (session?.user as SessionUser)?.isAdmin) && (
               <button
                 onClick={() => handleDeleteComment(comment.id)}
                 className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"

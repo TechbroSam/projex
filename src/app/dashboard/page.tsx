@@ -14,6 +14,13 @@ interface Project {
   createdAt: string;
 }
 
+interface SessionUser {
+  id: string;
+  plan: string;
+  image: string | null;
+}
+
+
 // We move the main component logic into its own function
 function DashboardContent() {
   const { data: session, status, update } = useSession();
@@ -22,9 +29,8 @@ function DashboardContent() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-
-
-  const currentPlan = (session?.user as any)?.plan || 'FREE';
+  
+  const currentPlan = (session?.user as SessionUser)?.plan || 'FREE';
   const isPremium = currentPlan === 'PREMIUM';
  
 
@@ -140,7 +146,7 @@ function DashboardContent() {
           </div>
         ) : (
           <div className="text-center py-12 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
-            <h3 className="text-lg font-semibold">You haven't created any projects yet.</h3>
+            <h3 className="text-lg font-semibold">You haven&apos;t created any projects yet.</h3>
             <Link href="/projects/create" className="mt-4 inline-block bg-orange-600 text-white px-5 py-2 rounded-md">
               Create a Project
             </Link>
@@ -161,7 +167,7 @@ function DashboardContent() {
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 dark:text-gray-400">You haven't been invited to any team projects yet.</p>
+          <p className="text-gray-500 dark:text-gray-400">You haven&apos;t been invited to any team projects yet.</p>
         )}
       </section>
     </div>
@@ -172,7 +178,7 @@ function DashboardContent() {
 export default function DashboardPage() {
   return (
     <Suspense fallback={<p className="text-center py-20">Loading Dashboard...</p>}>
-      <DashboardContent />
+      <DashboardContent/>
     </Suspense>
   )
 }

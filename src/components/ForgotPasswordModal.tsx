@@ -30,8 +30,9 @@ export default function ForgotPasswordModal({ onSwitchToLogin }: ForgotPasswordM
       if (!res.ok) throw new Error(data.error || 'Something went wrong.');
       
       setMessage(data.message);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) { setError(err.message); }
+      else { setError('Something went wrong.'); }
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +52,7 @@ export default function ForgotPasswordModal({ onSwitchToLogin }: ForgotPasswordM
       ) : (
         <>
           <p className="text-center text-gray-500 dark:text-gray-400 mb-6 text-sm">
-            Enter your email and we'll send you a link to reset your password.
+            Enter your email and we&apos;ll send you a link to reset your password.
           </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

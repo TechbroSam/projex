@@ -6,11 +6,18 @@ import type { Task, Role, Comment, User } from "@prisma/client";
 import { Sparkles } from "lucide-react";
 import CommentSection from "./CommentSection";
 import Link from "next/link";
-import { Paperclip } from "lucide-react";
+
+// Define a more specific type for the Comment object with its author
+interface CommentWithAuthor extends Comment {
+  author: {
+    id: string;
+    name: string | null;
+  };
+}
 
 // Define a more specific type for the Task object we expect from the API
 interface TaskWithDetails extends Task {
-  comments: (Comment & { author: { name: string | null } })[];
+  comments: CommentWithAuthor[];
 }
 
 interface TaskDetailModalProps {
@@ -19,6 +26,12 @@ interface TaskDetailModalProps {
   onClose: () => void;
   onUpdate: () => void;
 }
+
+
+interface SessionUser {
+  plan?: string;
+}
+
 
 export default function TaskDetailModal({
   taskId,
@@ -32,7 +45,10 @@ export default function TaskDetailModal({
   const [isSaving, setIsSaving] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const { data: session } = useSession();
-  const currentPlan = (session?.user as any)?.plan || "FREE";
+
+  // FIX: Define a specific type for the session user to avoid 'any'
+  const sessionUser = session?.user as SessionUser;
+  const currentPlan = sessionUser?.plan || "FREE";
 
   useEffect(() => {
     const fetchTask = async () => {
@@ -104,7 +120,7 @@ export default function TaskDetailModal({
   return (
     <div className="p-6">
       <input
-        title="Read only"
+        title="Task Title"
         name="title"
         value={task.title || ""}
         onChange={handleInputChange}
@@ -139,7 +155,7 @@ export default function TaskDetailModal({
             onChange={handleInputChange}
             readOnly={isReadOnly}
             rows={5}
-            className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 read-only:bg-gray-100 dark:read-only:bg-gray-800"
+            className="w-full p-2 border rounded-md"
             placeholder={
               isReadOnly && !task.description
                 ? "No description provided."
@@ -161,7 +177,7 @@ export default function TaskDetailModal({
               value={task.priority || "Medium"}
               onChange={handleInputChange}
               disabled={isReadOnly}
-              className="mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 disabled:opacity-70"
+              className="mt-1 w-full p-2 border rounded-md"
             >
               <option>Low</option>
               <option>Medium</option>
@@ -186,11 +202,10 @@ export default function TaskDetailModal({
               }
               onChange={handleInputChange}
               readOnly={isReadOnly}
-              className="mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 read-only:opacity-70"
+              className="mt-1 w-full p-2 border rounded-md"
             />
           </div>
         </div>
-
         {currentPlan === "PREMIUM" ? (
           <div>
             <label
@@ -205,7 +220,7 @@ export default function TaskDetailModal({
               value={task.assigneeId || ""}
               onChange={handleInputChange}
               disabled={isReadOnly}
-              className="mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 disabled:opacity-70"
+              className="mt-1 w-full p-2 border rounded-md"
             >
               <option value="">Unassigned</option>
               {projectMembers.map((member) => (
@@ -217,10 +232,10 @@ export default function TaskDetailModal({
           </div>
         ) : (
           !isReadOnly && (
-            <div className="text-sm p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900/30 rounded-md">
+            <div className="text-sm p-3 bg-yellow-50 rounded-md">
               <Link
                 href="/dashboard/billing"
-                className="font-semibold text-yellow-800 dark:text-yellow-300 hover:underline"
+                className="font-semibold text-yellow-800 hover:underline"
               >
                 Upgrade to Premium to assign tasks.
               </Link>
@@ -228,8 +243,7 @@ export default function TaskDetailModal({
           )
         )}
       </div>
-
-      {currentPlan === "PREMIUM" ? (
+   {currentPlan === "PREMIUM" ? (
         <CommentSection
           projectId={task.projectId!}
           taskId={taskId}
@@ -240,14 +254,14 @@ export default function TaskDetailModal({
                 ? comment.createdAt
                 : comment.createdAt.toISOString(),
             author: {
-              id: (comment.author as any)?.id ?? comment.authorId,
+              id: (comment.author as User)?.id ?? comment.authorId,
               name: comment.author.name,
             },
           }))}
         />
       ) : (
         <div className="mt-6 border-t pt-6 text-center text-sm text-gray-500">
-          <p>Upgrade to Premium to unlock task comments and collaboration.</p>
+          <p>Upgrade to Premium to unlock task comments.</p>
           <Link
             href="/dashboard/billing"
             className="text-orange-600 font-semibold hover:underline"
@@ -256,12 +270,11 @@ export default function TaskDetailModal({
           </Link>
         </div>
       )}
-
-      <div className="flex justify-end gap-4 mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex justify-end gap-4 mt-8 pt-4 border-t">
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="px-4 py-2 text-sm rounded-md"
         >
           Close
         </button>
@@ -269,7 +282,7 @@ export default function TaskDetailModal({
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="px-4 py-2 text-sm bg-orange-600 text-white rounded-md hover:bg-orange-700"
+            className="px-4 py-2 text-sm bg-orange-600 text-white rounded-md"
           >
             {isSaving ? "Saving..." : "Save Changes"}
           </button>
