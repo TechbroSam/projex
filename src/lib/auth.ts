@@ -1,7 +1,7 @@
 // src/lib/auth.ts
 import { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaClient, Plan } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -30,7 +30,7 @@ export const authOptions: AuthOptions = {
             id: user.id,
             name: user.name,
             email: user.email,
-            image: user.image, // Pass image on initial login
+            image: user.image,
             plan: user.plan,
           };
         }
@@ -42,24 +42,29 @@ export const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   pages: { signIn: "/login" },
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user }) {
+      // On initial sign in, pass properties to the token
       if (user) {
         token.id = user.id;
         token.plan = user.plan;
-        token.picture = user.image; // Use 'picture' for the token's image field
+        token.picture = user.image;
       }
 
-      // This is the crucial part for updating the profile picture
-      if (trigger === "update" && session?.image) {
-        token.picture = session.image;
+      // FIX: On every session check, re-fetch the user's plan from the database.
+      // This ensures the session is ALWAYS up-to-date.
+      const dbUser = await prisma.user.findUnique({ where: { id: token.sub } });
+      if (dbUser) {
+        token.plan = dbUser.plan;
+        token.picture = dbUser.image;
       }
+
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.sub as string;
         session.user.plan = token.plan;
-        session.user.image = token.picture as string; // Pass the image from the token to the session
+        session.user.image = token.picture as string;
       }
       return session;
     },

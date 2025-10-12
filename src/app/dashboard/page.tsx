@@ -13,31 +13,28 @@ interface Project {
   description: string | null;
   createdAt: string;
 }
-
 interface SessionUser {
-  id: string;
-  plan: string;
-  image: string | null;
+  name?: string | null;
+  plan?: string;
 }
-
 
 // We move the main component logic into its own function
 function DashboardContent() {
   const { data: session, status, update } = useSession();
   const [ownedProjects, setOwnedProjects] = useState<Project[]>([]);
   const [teamProjects, setTeamProjects] = useState<Project[]>([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  const currentPlan = (session?.user as SessionUser)?.plan || 'FREE';
-  const isPremium = currentPlan === 'PREMIUM';
- 
-
+  
+  
+ // This single useEffect handles all initial logic
   useEffect(() => {
-  if (searchParams.get('subscription_success')) {
-      // Pass an object to the update function to trigger our new JWT logic
-      update({ plan: 'PREMIUM' });
+    // This part handles the session sync after a successful subscription
+    if (searchParams.get('subscription_success')) {
+      // The update() function tells NextAuth to re-fetch the session from the server.
+      update();
+      // Clean up the URL without a full page reload
       router.replace('/dashboard', { scroll: false });
     }
 
@@ -52,8 +49,7 @@ function DashboardContent() {
 
     if (status === 'authenticated') {
       fetchProjects();
-    }
-    if (status === 'unauthenticated') {
+    } else if (status === 'unauthenticated') {
       router.push('/login');
     }
   }, [status, router, searchParams, update]);
@@ -72,9 +68,12 @@ function DashboardContent() {
     }
   };
 
-  if (status === 'loading' || isRefreshing) return <p className="text-center py-20">Syncing your account...</p>;
+   if (status === 'loading') {
+    return <p className="text-center py-20">Loading Dashboard...</p>;
+  }
 
-
+  const user = session?.user as SessionUser;
+  const currentPlan = user?.plan || 'FREE';
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -87,7 +86,7 @@ function DashboardContent() {
             </p>
           </div>
           <div className="flex items-center gap-4 flex-wrap">
-            {isPremium ? (
+            {currentPlan === 'PREMIUM' ? (
               <>
                 <div className="flex items-center gap-2 text-sm text-yellow-700 dark:text-yellow-500 border dark:border-yellow-500/30 border-yellow-700/30 dark:bg-yellow-500/10 bg-yellow-700/10 px-3 py-1.5 rounded-full">
                   <Crown size={16} />
