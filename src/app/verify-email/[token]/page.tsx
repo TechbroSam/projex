@@ -2,10 +2,13 @@
 'use client';
 import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 
-function VerifyTokenContent({ token }: { token: string }) {
+function VerifyTokenContent() {
   const [status, setStatus] = useState('Verifying your email...');
   const [isSuccess, setIsSuccess] = useState(false);
+  const params = useParams();
+  const token = params.token as string;
 
   useEffect(() => {
     const verifyToken = async () => {
@@ -15,9 +18,11 @@ function VerifyTokenContent({ token }: { token: string }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token }),
         });
+        
         if (!res.ok) {
           throw new Error('Verification failed.');
         }
+        
         setStatus('Your email has been successfully verified!');
         setIsSuccess(true);
       } catch (error) {
@@ -25,7 +30,10 @@ function VerifyTokenContent({ token }: { token: string }) {
         setIsSuccess(false);
       }
     };
-    verifyToken();
+
+    if (token) {
+      verifyToken();
+    }
   }, [token]);
 
   return (
@@ -34,7 +42,6 @@ function VerifyTokenContent({ token }: { token: string }) {
         {status}
       </h1>
       
-      {/* Only show the login button on success */}
       {isSuccess && (
         <Link 
           href="/login" 
@@ -47,11 +54,11 @@ function VerifyTokenContent({ token }: { token: string }) {
   );
 }
 
-// The main page component that handles Suspense
-export default function VerifyTokenPage({ params }: { params: { token: string } }) {
+// The main page component
+export default function VerifyTokenPage() {
   return (
     <Suspense fallback={<div className="text-center py-20">Verifying...</div>}>
-      <VerifyTokenContent token={params.token} />
+      <VerifyTokenContent />
     </Suspense>
-  )
+  );
 }
