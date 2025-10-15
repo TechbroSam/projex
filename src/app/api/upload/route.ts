@@ -32,11 +32,14 @@ export async function POST(request: NextRequest) {
 
     const result = await cloudinary.uploader.upload(fileUri, {
       folder: 'projexy-attachments',
+      resource_type: 'auto', 
+      // FIX: Explicitly set the upload type to public
+      type: 'upload', 
     });
-
+    
     return NextResponse.json({ url: result.secure_url });
   } catch (error) {
     console.error("Upload failed:", error);
-    return NextResponse.json({ error: 'Image upload failed.' }, { status: 500 });
+    return NextResponse.json({ error: 'File upload failed.' }, { status: 500 });
   }
 }

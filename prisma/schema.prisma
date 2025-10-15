@@ -37,6 +37,13 @@ model User {
 
  
   stripeCustomerId String?
+
+  // --- ADD THESE FIELDS FOR VERIFICATION ---
+  emailVerified    DateTime? // Stores the date they verified
+  verificationToken String?  
+
+  resetPasswordToken       String?   
+  resetPasswordTokenExpiry DateTime?
   
   ownedProjects  Project[] @relation("ProjectOwner")
   assignedTasks  Task[]    @relation("TaskAssignee")

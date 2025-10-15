@@ -2,48 +2,48 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
-import nodemailer from 'nodemailer';
-
+import { Resend } from 'resend';
 
 const prisma = new PrismaClient();
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
   try {
     const { email } = await request.json();
-
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      // For security, don't reveal if a user exists.
       return NextResponse.json({ message: 'If an account with this email exists, a reset link has been sent.' });
     }
 
-    const resetToken = crypto.randomBytes(20).toString('hex');
+    // Generate a secure token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
-    // In a real app, you would hash this token before saving
-    // and add an expiry date to the user model.
-    // For this portfolio piece, we'll keep it simple.
+    // Set an expiration date (e.g., 1 hour from now)
+    const tokenExpiry = new Date(Date.now() + 3600000);
+
+    // Save the hashed token and expiry date to the user's record
+    await prisma.user.update({
+      where: { email },
+      data: {
+        resetPasswordToken: hashedToken,
+        resetPasswordTokenExpiry: tokenExpiry,
+      },
+    });
 
     const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${resetToken}`;
-
-    // This is a placeholder for email sending.
-    // Replace with your actual email service (like Nodemailer + SendGrid)
-    console.log(`Password reset link for ${email}: ${resetUrl}`);
-
-    // Example with Nodemailer (requires setup)
-    const transporter = nodemailer.createTransport({ });
-    if (user.email) {
-      await transporter.sendMail({
-        from: '"ProjeXY" <no-reply@projexy.com>',
-        to: user.email,
-        subject: 'Your Password Reset Request',
-        html: `<p>Click here to reset your password: <a href="${resetUrl}">${resetUrl}</a></p>`,
-      });
-    }
+    
+    await resend.emails.send({
+      from: 'ProjeXY <no-reply@samuelobior.com>', 
+      to: user.email!,
+      subject: 'Your ProjeXY Password Reset Request',
+      html: `<p>Click here to reset your password: <a href="${resetUrl}">${resetUrl}</a></p>`,
+    });
 
     return NextResponse.json({ message: 'If an account with this email exists, a reset link has been sent.' });
-
   } catch (error) {
+    console.error("Forgot Password Error:", error);
     return NextResponse.json({ error: 'An error occurred.' }, { status: 500 });
   }
 }

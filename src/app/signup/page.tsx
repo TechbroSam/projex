@@ -24,7 +24,7 @@ export default function SignUpPage() {
         body: JSON.stringify({ name, email, password }),
       });
       if (res.ok) {
-        router.push('/login');
+        router.push('/verify-email');
       } else {
         const data = await res.json();
         throw new Error(data.message || 'Failed to create account.');

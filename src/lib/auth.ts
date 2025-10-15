@@ -20,12 +20,20 @@ export const authOptions: AuthOptions = {
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
+        if (!user || !user.hashedPassword) return null;
 
-        if (
-          user &&
-          user.hashedPassword &&
-          (await bcrypt.compare(credentials.password, user.hashedPassword))
-        ) {
+        // --- PREVENT LOGIN IF EMAIL IS NOT VERIFIED ---
+        if (!user.emailVerified) {
+          throw new Error(
+            "Please verify your email address before logging in."
+          );
+        }
+
+        const isPasswordCorrect = await bcrypt.compare(
+          credentials.password,
+          user.hashedPassword
+        );
+        if (isPasswordCorrect) {
           return {
             id: user.id,
             name: user.name,
@@ -34,6 +42,7 @@ export const authOptions: AuthOptions = {
             plan: user.plan,
           };
         }
+
         return null;
       },
     }),

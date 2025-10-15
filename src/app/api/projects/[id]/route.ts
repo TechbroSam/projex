@@ -49,13 +49,17 @@ export async function GET(
       return NextResponse.json({ error: 'Project not found or you do not have access.' }, { status: 404 });
     }
 
+    // Find the current user's membership to determine their role
+    const currentUserMembership = project.members.find(m => m.userId === session.user.id);
+    const currentUserRole = currentUserMembership?.role;
+
     // Simplify the members array for the frontend
     const simplifiedProject = {
       ...project,
       members: project.members.map(membership => membership.user)
     };
 
-    return NextResponse.json({ project: simplifiedProject });
+    return NextResponse.json({ project: simplifiedProject, currentUserRole });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch project' }, { status: 500 });
   }

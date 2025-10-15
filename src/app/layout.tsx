@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html className="dark" lang="en" suppressHydrationWarning>
+    <html className="dark scroll-smooth" lang="en" suppressHydrationWarning>
       <body
         className={`${inter.className} flex flex-col min-h-screen bg-white dark:bg-black text-black dark:text-white`}
       >

@@ -7,15 +7,6 @@ import { pusherServer } from '@/lib/pusher';
 
 const prisma = new PrismaClient();
 
-// Helper function to check if a user is a member of the task's project
-async function checkMembership(userId: string, taskId: string) {
-  const task = await prisma.task.findUnique({
-    where: { id: taskId },
-    select: { project: { select: { members: true } } },
-  });
-  return task?.project.members.some(member => member.userId === userId);
-}
-
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -23,39 +14,37 @@ export async function POST(request: Request) {
   }
 
   try {
+    // Now expecting attachments in the body
     const { text, taskId, attachments } = await request.json();
-    if (!text || !taskId) {
+    
+    // Allow comments with only attachments
+    if (!taskId || (!text && (!attachments || attachments.length === 0))) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
 
-    // --- PERMISSION CHECK ---
-    const isMember = await checkMembership(session.user.id, taskId);
-    if (!isMember) {
-      return NextResponse.json({ error: 'You do not have permission to comment on this task.' }, { status: 403 });
-    }
+    // You can add a permission check here to ensure the user is part of the project
 
     const newComment = await prisma.comment.create({
       data: {
         text,
         taskId,
         authorId: session.user.id,
-         attachments: attachments || [], // Save the attachments
+        attachments: attachments || [], // Save the attachments array
       },
       include: {
-        author: { select: { name: true } },
+        author: { select: { name: true, id: true } },
       },
     });
 
-     // --- TRIGGER PUSHER EVENT ---
+    // Trigger a real-time event
     const task = await prisma.task.findUnique({ where: { id: taskId } });
     if (task) {
-      // Send a message on a channel specific to this project
       await pusherServer.trigger(`private-project-${task.projectId}`, 'new-comment', newComment);
     }
-    // --- END PUSHER LOGIC ---
 
     return NextResponse.json({ comment: newComment }, { status: 201 });
   } catch (error) {
+    console.error("Failed to create comment:", error);
     return NextResponse.json({ error: 'Failed to create comment.' }, { status: 500 });
   }
 }

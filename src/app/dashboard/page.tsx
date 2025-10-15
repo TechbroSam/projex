@@ -123,7 +123,7 @@ function DashboardContent() {
                 <p className="text-gray-600 dark:text-gray-400 line-clamp-2">{project.description}</p>
                 <button
                   onClick={(e) => handleDeleteProject(project.id, e)}
-                  className="absolute top-3 right-3 p-2 text-gray-400 rounded-full opacity-0 group-hover:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-red-500 transition-opacity"
+                  className="absolute top-3 right-3 p-2 text-gray-400 rounded-full opacity-100 sm:opacity-0 group-hover:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-red-500 transition-opacity"
                   aria-label="Delete project"
                 >
                   <Trash2 size={18} />
